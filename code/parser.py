@@ -36,7 +36,7 @@ def create_parser():
     parser.add_argument('--label', type=str, default=None, help="Extra label to add to output files");
     parser.add_argument('--dataset', type=str, default='/home/fagg/datasets/core50', help='Data set directory')
     parser.add_argument('--problem', type=str, default='condition', help='Problem type [condition, example]')
-    parser.add_argument('--image_size', nargs=3, type=int, default=[128,128,3], help="Size of input images (rows, cols, channels)")
+    parser.add_argument('--image_size', nargs=3, type=int, default=[256,256,26], help="Size of input images (rows, cols, channels)")
     parser.add_argument('--meta_dataset', type=str, default='core50_df.pkl', help='Name of file containing the core 50 metadata')
     parser.add_argument('--precache', type=str, default=None, help='Precached dataset location')
     parser.add_argument('--model_dir', type=str, default=None, help='Location of saved model (post only)')
