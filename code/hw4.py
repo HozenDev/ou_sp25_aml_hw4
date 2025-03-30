@@ -40,6 +40,8 @@ at the beginning of a run.
 be fetched quickly for each training epoch
 '''
 
+import tensorflow as tf
+
 import argparse
 import pickle
 import wandb
@@ -48,9 +50,7 @@ import keras
 import os
 
 from keras.utils import plot_model
-
 import matplotlib.pyplot as plt
-import tensorflow as tf
 
 # Provided
 from job_control import *
