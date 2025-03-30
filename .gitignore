@@ -1,0 +1,19 @@
+# Root
+/*
+!/.gitignore
+!/readme.org
+!/*.html
+
+# Code
+!/code
+/code/*
+!/code/*.txt
+!/code/*.py
+!/code/*.sh
+!/code/models
+
+# Report
+!/report
+/report/*
+!/report/*.pdf
+!/report/*.org

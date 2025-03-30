@@ -1,0 +1,340 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+<title>CS 5043: HW4</title>
+</head>
+
+<body>
+<h1>CS 5043: HW4: Semantic Labeling</h1>
+
+Assignment notes:
+<ul>
+  <li> Deadline: Tuesday, April 1 @11:59pm.
+       <p>
+
+  </p></li><li> Hand-in procedure: submit a zip file to Gradescope
+       <p>
+       
+</p></li></ul>
+
+<h2>Data Set</h2>
+
+The Chesapeake Watershed data set is derived from satellite imagery
+over all of the US states that are part of the Chesapeake Bay
+watershed system.  We are using the <b>patches</b> part of the data
+set.  Each patch is a 256 x 256 image with 26 channels, in which each
+pixel corresponds to a 1m x 1m area of space.  Some of these
+channels are visible light channels (RGB), while others encode surface
+reflectivity at different frequencies.  In addition, each pixel is
+labeled as being one of:
+<ul>
+  <li> 0 = no class
+  </li><li> 1 = water
+  </li><li> 2 = tree canopy / forest
+  </li><li> 3 = low vegetation / field
+  </li><li> 4 = barren land
+  </li><li> 5 = impervious (other)
+  </li><li> 6 = impervious (road)
+</li></ul>
+
+<p>
+Here is an example of the RGB image of one patch and the corresponding pixel labels: <br>
+<img src="cs5043_hw4_files/patch.png">
+<img src="cs5043_hw4_files/labels.png">
+</p><p>
+
+Notes:
+
+</p><ul>
+  <li> <a href="http://lila.science/datasets/chesapeakelandcover">
+       Detailed description of the data set</a>
+       <p>
+
+</p></li></ul>
+
+<h3>Data Organization</h3>
+All of the data are located on the supercomputer in:
+<b>/home/fagg/datasets/radiant_earth/pa</b>.  Within this directory, there are both 
+<b>train</b> and <b>valid</b> directories.  Each of these contain
+directories F0 ... F9 (folds 0 to 9).  Each training fold is composed
+of 5000 patches.  Because of the size of the folds, we have provided
+code that produces a TF Dataset that dynamically loads the data as you
+need it.  We will use the <b>train</b> directory to draw our training
+and validation sets from, and the <b>valid</b> directory to draw our
+testing set from.
+
+<p>
+Local testing: the file <b>chesapeake_small.zip</b>
+contains the data for folds 0 and 9 (it is 6GB compressed).
+</p><p>
+
+<!--
+Within each fold directory, the files are of the form:
+<B>SOME_NON_UNIQUE_HEADER-YYY.npz</B>.  Where YYY is 0 ... 499 (all
+possible YYYs occur in each fold directory.  There are multiple files
+with each YYY number in each directory (100 in the training fold
+directories, to be precise).  
+<P>
+-->
+
+
+</p><h3>Data Access</h3>
+
+<a href="https://symbiotic-computing.org/fagg_html/classes/aml_2025/code/hw4/"><b>chesapeake_loader4.py</b></a> is provided.
+The key function call is:
+
+<pre>ds_train, ds_valid, ds_test, num_classes = create_datasets(base_dir='/home/fagg/datasets/radiant_earth/pa',
+                                                           fold:int=0,
+                                                           train_filt:str='*[012345678]',
+                                                           cache_dir:str=None,
+                                                           repeat_train:bool=False,
+                                                           shuffle_train:int=None,
+                                                           batch_size:int=8,
+                                                           prefetch:int=2,
+                                                           num_parallel_calls:int=4):
+
+</pre>
+where:
+<ul>
+  <li> <b>ds_train, ds_valid, ds_test</b> are TF Dataset objects that load and manage
+       your data
+  </li><li> <b>num_classes</b> is the number of classes that you are predicting
+  </li><li> <b>base_dir</b> is the main directory for the dataset
+  </li><li> <b>fold</b> is the fold to load (0 ... 9)
+  </li><li> <b>train_filt</b> is a regular expression filter that specifies which
+       file numbers to include.
+       <ul>
+	 <li> '*0' will load all numbers ending with zero (500 examples).
+	 </li><li> '*[01234]' will load all numbers ending with 0,1,2,3 or 4.
+	 </li><li> '*' will load all 5000 examples.
+	 </li><li> '*[012345678]' is the largest training set you should use
+       </li></ul>
+  </li><li> <b>cache_dir</b> is the cache directory if there is one (empty string ("") if cache to RAM, LSCRATCH location if caching to local SSD)
+  </li><li> <b>repeat_train</b> repeat training set indefinitely.  <b>NOTE: you must use this
+       in combination with an integer value of  steps_per_epoch for model.fit() </b> (this
+       tells model.fit() how many batches to consume from the data set for each epoch)
+  </li><li> <b>shuffle_train</b> size of the training set shuffle buffer
+  </li><li> <b>batch_size</b> is the size of the batches.  This cannot be
+       very large for this data set
+  </li><li> <b>prefetch</b> is the number of batches that will be buffered
+  </li><li> <b>num_parallel_calls</b> is the number of threads to use to
+       create the Dataset
+</li></ul>
+
+<b>Note: We strongly suggest that the values of key parameters be set
+using the command line</b>
+
+
+<p>
+
+The returned Datasets will generate batches of the specified size of
+input/output tuples.
+
+</p><ul>
+  <li> Inputs: float32: batch_size x 256 x 256 x 26
+  </li><li> Outputs: int8: batch_size x 256 x 256
+</li></ul>
+<p>
+
+
+</p><h2>The Problem</h2>
+
+Create an image-to-image translator that does semantic labeling of the
+images on a pixel-by-pixel basis.
+
+<p>
+
+Details:
+</p><ul>
+  <li> Your network output should be shape (examples, rows, cols,
+       number of classes), representing the probability distribution 
+over class labels for each pixel (where the sum of all class outputs for
+ a single pixel
+       is 1).
+<p>
+  </p></li><li> Use <b>keras.losses.SparseCategoricalCrossentropy()</b> as
+       your loss function (not the string!).  This will properly translate between your
+       one-output per class per pixel to the <b>outs</b> that have
+       just one integer class label for each pixel.
+       <p>
+
+  </p></li><li> Use <b>keras.metrics.SparseCategoricalAccuracy()</b> as an
+       evaluation metric.  Because of the class imbalance, a model
+       that predicts the majority class will have an accuracy of ~0.65
+       <p>
+
+  </p></li><li> Try using a sequential-style model, as well as a full U-net
+       model (with skip connections).  Your model building function
+       must produce both types of models and handle a range of depths.
+       <p>
+</p></li></ul>
+
+
+<h2>Deep Learning Experiment</h2>
+
+Create two different models:
+<ol>
+  <li> A shallow model (could even have no skip connections)
+  </li><li> A deep model
+</li></ol>
+
+For each model type, perform 5 different experiments:
+<ul>
+  <li> Use '*[012345678]' for training (train partition).  Note: when
+       debugging, just use '*0'
+  </li><li> The data generator always uses '*9' for validation data
+  </li><li> The five different experiments will use folds F0 ... F4.  Note
+       that there is no overlap between the folds
+</li></ul>
+<p>
+
+
+</p><p>
+
+</p><h3>Reporting</h3>
+
+<ol>
+  <li> Figures 1a,b: model architectures from plot_model() (one for
+       each of your shallow and deep networks). 
+       <p>
+
+  </p></li><li> Figure 2a,b: Validation accuracy as a function of training
+       epoch (5 curves per model).
+       
+       <p>
+
+  </p></li><li> Figures 3a,b: for each model type, combine the test data across all
+       5 folds and generate a confusion matrix. 
+
+       <p>
+       
+  </p></li><li> Figure 4: scatter plot comparing test set accuracy for each
+       model type (so, each point corresponds to one fold).  Include a
+       dashed y=x line on your figure.
+
+       <p>
+
+  </p></li><li> Figures 5a,b: for both models, show ten interesting examples (one per row).
+       Each row includes three columns: Satellite image (channels 0,1,2); true
+       labels; predicted labels.
+
+       <p>
+
+       plt.imshow() can be useful here.  For the satellite image, pass
+       in the tensor for the image (r x c x 3).  For label images,
+       pass in a tensor of shape (r x c) and set
+       vmax=6.  This will force the label-to-color mapping to be the
+       same across all images (imshow will pick colors for you).
+
+       </p><p>
+       To convert your model output into a set of class labels, use np.argmax().
+</p><p>
+       
+  </p></li><li> Reflection
+       <ol>
+	 <li> What regularization choices did you make for your
+	      shallow and deep networks?  Why?
+	      <p>
+
+	 </p></li><li> How do the training times compare between the two model types?
+	      <p>
+
+	 </p></li><li> Describe the relative test set performance of the two model
+	      types.  Include the mean, min and max accuracy for your test set for
+	      both model types (report separately)
+	      <p>
+	      
+	 </p></li><li> Describe any qualitative differences between the outputs
+	      of the two model types.  What types of errors do your
+	      models tend to make?
+	      
+	      <p>
+
+       </p></li></ol>
+<p>
+
+</p></li></ol>
+
+<p></p><hr><p>
+
+
+
+
+</p><h2>What to Hand In</h2>
+
+<ul>
+  <li> Your python code (.py) and any notebook files (.ipynb)
+  </li><li> Any command-line argument files
+  </li><li> Your batch file
+  </li><li> A sample stdout and stderr file
+  </li><li> Figures 1-5
+  </li><li> Your reflection
+</li></ul>
+
+
+
+<h2>Grades</h2>
+
+<ul>
+  <li> 20 pts: Clean, general code for model building (including in-code documentation) 
+  </li><li> 10 pts: Figure 1a,b
+  </li><li> 10 pts: Figure 2a,b
+  </li><li> 10 pts: Figures 3a,b
+  </li><li> 10 pts: Figure 4
+  </li><li> 10 pts: Figures 5a,b
+  </li><li> 20 pts: Reflection
+  </li><li> 10 pts: Reasonable test set performance for all deep rotations (.93 or better)
+</li></ul>
+
+<h2>References</h2>
+
+<ul>
+  <li> <a href="https://divamgupta.com/image-segmentation/2019/06/06/deep-learning-semantic-segmentation-keras.html">A Beginner's Guide to Deep Semantic Segmentation</a>
+       <p>
+
+</p></li></ul>
+
+<h2>Hints</h2>
+<ul>
+  <li> Start small.  Get the architecture working before throwing lots
+       of data at it.<p>
+
+  </p></li><li> Write generic code.<p>
+
+  </p></li><li> Start early.  Expect the learning process for these models to
+       be relatively long.<p>
+       
+  </p></li><li> Caching the TF Datasets to RAM works fine here.  Specify the
+       empty string as the cache option when creating the datasets.<p>
+
+  </p></li><li> Batch size of 64 works for 40GB GPUs<p>
+
+  </p></li><li> Be prepared to train for hundreds of epochs (with 100 steps_per_epoch)<p>
+
+  </p></li><li> To monitor GPU utilization in WandB: look for the System
+       section and the figure <em>Process GPU Utilization</em><p>
+
+  </p></li><li> Due to the class imbalance in the data set, it is trivial to
+       hit a test set accuracy of 0.65.  However, things don't start to get
+       interesting until you get above 0.91.  
+       <p>
+
+  </p></li><li> Saving image data to your results pickle file will make them
+       very large.  I suggest only conditionally storing a few batches
+       of ins, outs, and predictions from your test set and not all
+       batches (and not the training and validation sets).
+<p>
+
+       
+</p></li></ul>
+
+<p></p><hr><p>
+<em><a href="http://symbiotic-computing.org/fagg_html">andrewhfagg -- gmail.com</a></em></p><p>
+
+<font size="-2">
+<!-- hhmts start -->
+Last modified: Thu Mar 27 10:32:04 2025
+<!-- hhmts end -->
+</font>
+
+
+</p></body></html>
