@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --partition=debug_gpu
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=64
-#SBATCH --mem=30G
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=10G
 #SBATCH --output=results/debug_%j_stdout.txt
 #SBATCH --error=results/debug_%j_stderr.txt
-#SBATCH --time=00:30:00
+#SBATCH --time=00:05:00
 #SBATCH --job-name=hw4_debug
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
 #SBATCH --mail-type=ALL

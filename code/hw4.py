@@ -260,14 +260,14 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
         print('Starting data flow')
 
     ds_train, ds_validation, ds_testing, n_classes = create_datasets(base_dir=args.dataset,
-                                                                     fold:int=args.rotation,
-                                                                     train_filt:str='*0',
-                                                                     cache_dir:str=args.cache,
-                                                                     repeat_train:bool=args.repeat,
-                                                                     shuffle_train:int=args.shuffle,
-                                                                     batch_size:int=args.batch,
-                                                                     prefetch:int=args.prefetch,
-                                                                     num_parallel_calls:int=args.num_parallel_calls):    
+                                                                     fold=args.rotation,
+                                                                     train_filt='*0',
+                                                                     cache_dir=args.cache,
+                                                                     repeat_train=args.repeat,
+                                                                     shuffle_train=args.shuffle,
+                                                                     batch_size=args.batch,
+                                                                     prefetch=args.prefetch,
+                                                                     num_parallel_calls=args.num_parallel_calls):    
 
     #################################
     #       Model Configuration     #
