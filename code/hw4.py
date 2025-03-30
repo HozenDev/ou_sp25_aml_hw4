@@ -60,7 +60,7 @@ from tensorflow.config.experimental import set_memory_growth, set_visible_device
 from tensorflow.config.threading import set_intra_op_parallelism_threads, set_inter_op_parallelism_threads
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.keras.metrics import SparseCategoricalAccuracy
-from tensforflow.distribute import MirroredStrategy
+from tensorflow.distribute import MirroredStrategy
 
 #################################################################
 # Default plotting parameters
