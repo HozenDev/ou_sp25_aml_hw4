@@ -1,3 +1,5 @@
+--dataset='/home/fagg/datasets/radiant_earth/pa'
+--cache=""
 --Ntraining=3
 --patience=200
 --batch=64
