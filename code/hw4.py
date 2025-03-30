@@ -42,6 +42,16 @@ be fetched quickly for each training epoch
 
 import tensorflow as tf
 
+# Set memory growth before anything initializes the GPU
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        print(f"Enabled memory growth for {len(gpus)} GPU(s).")
+    except RuntimeError as e:
+        print(f"Error setting memory growth: {e}")
+
 import argparse
 import pickle
 import wandb
@@ -529,15 +539,15 @@ if __name__ == "__main__":
         print('NO VISIBLE DEVICES!!!!')
 
     # GPU check
-    visible_devices = tf.config.get_visible_devices('GPU') 
-    n_visible_devices = len(visible_devices)
-    print('GPUS:', visible_devices)
-    if n_visible_devices > 0:
-        for device in visible_devices:
-            tf.config.experimental.set_memory_growth(device, True)
-        print('We have %d GPUs\n'%n_visible_devices)
-    else:
-        print('NO GPU')
+    # visible_devices = tf.config.get_visible_devices('GPU') 
+    # n_visible_devices = len(visible_devices)
+    # print('GPUS:', visible_devices)
+    # if n_visible_devices > 0:
+    #     for device in visible_devices:
+    #         tf.config.experimental.set_memory_growth(device, True)
+    #     print('We have %d GPUs\n'%n_visible_devices)
+    # else:
+    #     print('NO GPU')
 
     if args.check:
         # Just check to see if all experiments have been executed
