@@ -267,7 +267,7 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
                                                                      shuffle_train=args.shuffle,
                                                                      batch_size=args.batch,
                                                                      prefetch=args.prefetch,
-                                                                     num_parallel_calls=args.num_parallel_calls):    
+                                                                     num_parallel_calls=args.num_parallel_calls)
 
     #################################
     #       Model Configuration     #
