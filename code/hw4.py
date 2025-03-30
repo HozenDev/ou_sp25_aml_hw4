@@ -40,18 +40,6 @@ at the beginning of a run.
 be fetched quickly for each training epoch
 '''
 
-import tensorflow as tf
-
-# Set memory growth before anything initializes the GPU
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        print(f"Enabled memory growth for {len(gpus)} GPU(s).")
-    except RuntimeError as e:
-        print(f"Error setting memory growth: {e}")
-
 import argparse
 import pickle
 import wandb
@@ -62,13 +50,16 @@ import os
 from keras.utils import plot_model
 import matplotlib.pyplot as plt
 
-# Provided
 from job_control import *
 from parser import *
-
-# You need to provide this yourself
 from cnn_classifier import *
 from chesapeake_loader4 import create_datasets
+
+from tensorflow.config import get_visible_devices
+from tensorflow.config.experimental import set_memory_growth, set_visible_devices
+from tensorflow.config.threading import set_intra_op_parallelism_threads, set_inter_op_parallelism_threads
+from tensorflow.keras.losses import SparseCategoricalCrossentropy, SparseCategoricalAccuracy
+from tensforflow.distribute import MirroredStrategy
 
 #################################################################
 # Default plotting parameters
@@ -318,7 +309,7 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
     # Create the network
     if multi_gpus > 1:
         # Multiple GPUs
-        mirrored_strategy = tf.distribute.MirroredStrategy()
+        mirrored_strategy = MirroredStrategy()
 
         with mirrored_strategy.scope():
             # Build network: you must provide your own implementation
@@ -332,8 +323,8 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
                 lambda_l2=args.L2_regularization,
                 lrate=args.lrate,
                 n_classes=n_classes,
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+                loss=SparseCategoricalCrossentropy(),
+                metrics=[SparseCategoricalAccuracy()],
                 padding=args.padding,
                 conv_activation=args.activation_conv,
                 dense_activation=args.activation_dense,
@@ -352,8 +343,8 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
                 lambda_l2=args.L2_regularization,
                 lrate=args.lrate,
                 n_classes=n_classes,
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+                loss=SparseCategoricalCrossentropy(),
+                metrics=[SparseCategoricalAccuracy()],
                 padding=args.padding,
                 conv_activation=args.activation_conv,
                 dense_activation=args.activation_dense,
@@ -535,19 +526,19 @@ if __name__ == "__main__":
 
     # Turn off GPU?
     if not args.gpu or "CUDA_VISIBLE_DEVICES" not in os.environ.keys():
-        tf.config.set_visible_devices([], 'GPU')
+        set_visible_devices([], 'GPU')
         print('NO VISIBLE DEVICES!!!!')
 
     # GPU check
-    # visible_devices = tf.config.get_visible_devices('GPU') 
-    # n_visible_devices = len(visible_devices)
-    # print('GPUS:', visible_devices)
-    # if n_visible_devices > 0:
-    #     for device in visible_devices:
-    #         tf.config.experimental.set_memory_growth(device, True)
-    #     print('We have %d GPUs\n'%n_visible_devices)
-    # else:
-    #     print('NO GPU')
+    visible_devices = get_visible_devices('GPU') 
+    n_visible_devices = len(visible_devices)
+    print('GPUS:', visible_devices)
+    if n_visible_devices > 0:
+        for device in visible_devices:
+            set_memory_growth(device, True)
+        print('We have %d GPUs\n'%n_visible_devices)
+    else:
+        print('NO GPU')
 
     if args.check:
         # Just check to see if all experiments have been executed
@@ -557,8 +548,8 @@ if __name__ == "__main__":
 
         # Set number of threads, if it is specified
         if args.cpus_per_task is not None:
-            tf.config.threading.set_intra_op_parallelism_threads(args.cpus_per_task//2)
-            tf.config.threading.set_inter_op_parallelism_threads(args.cpus_per_task//2)
+            set_intra_op_parallelism_threads(args.cpus_per_task//2)
+            set_inter_op_parallelism_threads(args.cpus_per_task//2)
 
         # Do the work
         execute_exp(args, multi_gpus=n_visible_devices)
