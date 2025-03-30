@@ -1,4 +1,4 @@
---dataset='/home/fagg/datasets/radiant_earth/pa'
+--dataset=/home/fagg/datasets/radiant_earth/pa
 --cache=""
 --Ntraining=3
 --patience=200
@@ -6,4 +6,4 @@
 --shuffle=200
 --min_delta=0.001
 --no_use_py_func
---project='HW4'
+--project=HW4
