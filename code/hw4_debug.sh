@@ -4,8 +4,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=10G
-#SBATCH --output=results/debug_%j_stdout.txt
-#SBATCH --error=results/debug_%j_stderr.txt
+#SBATCH --output=results/debug/stdout.txt
+#SBATCH --error=results/debug/stderr.txt
 #SBATCH --time=00:05:00
 #SBATCH --job-name=hw4_debug
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
