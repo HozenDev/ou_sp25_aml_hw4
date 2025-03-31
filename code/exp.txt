@@ -5,7 +5,7 @@
 26
 --padding=same
 --Ntraining=3
---patience=100
+--patience=50
 --batch=64
 --shuffle=200
 --min_delta=0.001

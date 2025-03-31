@@ -268,10 +268,12 @@ def execute_exp(args, multi_gpus:int=1):
     print('#################')
     print('Validation')
     results['args'] = args
-    results['predict_validation'] = model.predict(ds_validation)
-    results['predict_validation_eval'] = model.evaluate(ds_validation)
-    wandb.log({'final_val_loss': results['predict_validation_eval'][0]})
-    wandb.log({'final_val_sparse_categorical_accuracy': results['predict_validation_eval'][1]})
+    # results_predict_validation = model.predict(ds_validation)
+    results_predict_validation_eval = model.evaluate(ds_validation)
+    # results['predict_validation'] = model.predict(ds_validation)
+    # results['predict_validation_eval'] = model.evaluate(ds_validation)
+    wandb.log({'final_val_loss': results_predict_validation_eval[0]})
+    wandb.log({'final_val_sparse_categorical_accuracy': results_predict_validation_eval[1]})
 
     # Test set
     if ds_testing is not None:
@@ -285,13 +287,15 @@ def execute_exp(args, multi_gpus:int=1):
     # Training set
     print('#################')
     print('Training')
-    results['predict_training'] = model.predict(ds_train)
-    results['predict_training_eval'] = model.evaluate(ds_train)
+    results_predict_training_eval = model.evaluate(ds_train)
+    # results['predict_training'] = model.predict(ds_train)
+    # results['predict_training_eval'] = model.evaluate(ds_train)
 
-    wandb.log({'final_train_loss': results['predict_training_eval'][0]})
-    wandb.log({'final_train_sparse_categorical_accuracy': results['predict_training_eval'][1]})
+    wandb.log({'final_train_loss': results_predict_training_eval[0]})
+    wandb.log({'final_train_sparse_categorical_accuracy': results_predict_training_eval[1]})
 
-    results['history'] = history.history
+    # History
+    # results['history'] = history.history
 
     ## NOTE: may want to add some additional logging of test data performance
 
