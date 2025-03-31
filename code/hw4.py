@@ -1,49 +1,20 @@
-'''
-Advanced Machine Learning, 2025
-HW 3 Base Code
+"""
+Advanced Machine Learning, 2025, HW4
 
 Author: Andrew H. Fagg (andrewhfagg@gmail.com)
+Editor: Enzo B. Durel (enzo.durel@gmail.com)
 
-Image classification for the Core 50 data set
+Semantic labeling of the Chesapeake Bay
+"""
 
-Updates for using GPUs
-- Batch file:
-#SBATCH --gres=gpu:1
-
-#SBATCH --partition=SOME PARTITION THAT CONTAINS A GPU
-or
-#SBATCH --partition=disc_dual_a100_students
-
-#SBATCH --cpus-per-task=64       # This will vary depending on the node you are on
-
-
-- Command line options to include
---cache ""                                     (use RAM to cache the datasets)
-OR
---cache $LSCRATCH                              (use lscratch to cache the datasets to local fast disk)
-
-
---batch 4096                                   (this parameter is per GPU)
---gpu
---precache datasets_by_fold_4_objects          (use a 4-object pre-constructed dataset)
-
-
-Notes: 
-- batch is now a parameter per GPU.  If there are two GPUs, then this number is doubled internally.
-   Note that you must do other things to make use of more than one GPU
-- batch of 4096 works on the a100 and h100 GPUs (probably the L40S/ada GPUs)
-- The precached dataset is a serialized copy of a set of TF.Datasets (located on slow spinning disk).  
-Each directory contains all of the images for a single data fold within a couple of files.  Loading 
-these files is *a lot* less expensive than having to load the individual images and preprocess them 
-at the beginning of a run.
-- The cache is used to to store the loaded datasets into RAM or fast, local SSD so the data can 
-be fetched quickly for each training epoch
-'''
+#################################################################
+#                           Imports                             #
+#################################################################
 
 from chesapeake_loader4 import create_datasets
 import tensorflow as tf
 
-# Set memory growth for GPUs
+# Gpus initialization
 gpus = tf.config.experimental.list_physical_devices('GPU')
 n_visible_devices = len(gpus)
 if gpus:
@@ -61,22 +32,28 @@ if cpus_per_task > 1:
     tf.config.threading.set_intra_op_parallelism_threads(cpus_per_task // 2)
     tf.config.threading.set_inter_op_parallelism_threads(cpus_per_task // 2)
 
+# Keras
 import keras
 from keras.utils import plot_model
 
-import argparse
-import pickle
+# WandB
 import wandb
+
+# Other imports
+import pickle
 import socket
 import matplotlib.pyplot as plt
 
-# Provided
-from job_control import *
+# Local imports
+from job_control import JobIterator
 from parser import *
 from cnn_classifier import *
+from tools import *
 
 #################################################################
-# Default plotting parameters
+#                 Default plotting parameters                   #
+#################################################################
+
 FIGURESIZE=(10,6)
 FONTSIZE=18
 
@@ -85,166 +62,12 @@ plt.rcParams['font.size'] = FONTSIZE
 
 plt.rcParams['xtick.labelsize'] = FONTSIZE
 plt.rcParams['ytick.labelsize'] = FONTSIZE
-
-#################################################################
-
-def exp_type_to_hyperparameters(args:argparse.ArgumentParser)->dict:
-    '''
-    Translate the exp_type into a hyperparameter set
-
-    This is trivial right now
-
-    :param args: ArgumentParser
-
-    :return: Hyperparameter set (in dictionary form)
-    '''
-    if args.exp_type is None:
-        p = {'rotation': range(5)}
-    elif args.exp_type == 'L2':
-        p = {'rotation': range(5), 'L2_regularization': [1.0, 10.0]}
-    else:
-        assert False, "Unrecognized exp_type (%s)"%args.exp_type
-
-    return p
-
-
-#################################################################
-def check_args(args:argparse.ArgumentParser):
-    '''
-    Check that the input arguments are rational
-
-    '''
-    assert (args.rotation >= 0 and args.rotation < args.Nfolds), "Rotation must be between 0 and Nfolds"
-    assert (args.Ntraining >= 1 and args.Ntraining <= (args.Nfolds-2)), "Ntraining must be between 1 and Nfolds-2"
-    assert (args.dropout is None or (args.dropout > 0.0 and args.dropout < 1)), "Dropout must be between 0 and 1"
-    assert (args.spatial_dropout is None or (args.spatial_dropout > 0.0 and args.dropout < 1)), "Spatial dropout must be between 0 and 1"
-    assert (args.lrate > 0.0 and args.lrate < 1), "Lrate must be between 0 and 1"
-    assert (args.L1_regularization is None or (args.L1_regularization > 0.0 and args.L1_regularization < 1)), "L1_regularization must be between 0 and 1"
-    assert (args.L2_regularization is None or (args.L2_regularization > 0.0 and args.L2_regularization < 1)), "L2_regularization must be between 0 and 1"
-    assert (args.cpus_per_task is None or args.cpus_per_task > 1), "cpus_per_task must be positive or None"
-    
-
-
-def augment_args(args:argparse.ArgumentParser)->str:
-    '''
-    Use the jobiterator to override the specified arguments based on the experiment index.
-
-    Modifies the args
-
-    :param args: arguments from ArgumentParser
-
-    :return: A string representing the selection of parameters to be used in the file name
-    '''
-    
-    # Create parameter sets to execute the experiment on.  This defines the Cartesian product
-    #  of experiments that we will be executing
-    p = exp_type_to_hyperparameters(args)
-
-    # Check index number
-    index = args.exp_index
-    if index is None:
-        return ""
-    
-    # Create the iterator
-    ji = JobIterator(p)
-    print("Total jobs:", ji.get_njobs())
-    
-    # Check bounds
-    assert (args.exp_index >= 0 and args.exp_index < ji.get_njobs()), "exp_index out of range"
-
-    # Print the parameters specific to this exp_index
-    print(ji.get_index(args.exp_index))
-    
-    # Push the attributes to the args object and return a string that describes these structures
-    return ji.set_attributes_by_index(args.exp_index, args)
- 
     
 #################################################################
-
-def generate_fname(args:argparse.ArgumentParser, params_str:str)->str:
-    '''
-    Generate the base file name for output files/directories.
-    
-    The approach is to encode the key experimental parameters in the file name.  This
-    way, they are unique and easy to identify after the fact.
-
-    :param args: from argParse
-
-    :params_str: String generated by the JobIterator
-
-    :return: Full string for file name
-    '''
-    # Hidden unit configuration
-    hidden_str = '_'.join(str(x) for x in args.hidden)
-    
-    # Conv configuration
-    conv_size_str = '_'.join(str(x) for x in args.conv_size)
-    conv_filter_str = '_'.join(str(x) for x in args.conv_nfilters)
-    pool_str = '_'.join(str(x) for x in args.pool)
-    
-    # Dropout
-    if args.dropout is None:
-        dropout_str = ''
-    else:
-        dropout_str = 'drop_%0.3f_'%(args.dropout)
-        
-    # Spatial Dropout
-    if args.spatial_dropout is None:
-        sdropout_str = ''
-    else:
-        sdropout_str = 'sdrop_%0.3f_'%(args.spatial_dropout)
-        
-    # L1 regularization
-    if args.L1_regularization is None:
-        regularizer_l1_str = ''
-    else:
-        regularizer_l1_str = 'L1_%0.6f_'%(args.L1_regularization)
-
-    # L2 regularization
-    if args.L2_regularization is None:
-        regularizer_l2_str = ''
-    else:
-        regularizer_l2_str = 'L2_%0.6f_'%(args.L2_regularization)
-
-
-    # Label
-    if args.label is None:
-        label_str = ""
-    else:
-        label_str = "%s_"%args.label
-        
-    # Experiment type
-    if args.exp_type is None:
-        experiment_type_str = ""
-    else:
-        experiment_type_str = "%s_"%args.exp_type
-
-    # learning rate
-    lrate_str = "LR_%0.6f_"%args.lrate
-    
-    # Put it all together, including #of training folds and the experiment rotation
-
-    name_format = "%s/image_%s%s%sCsize_%s_Cfilters_%s_Pool_%s_Pad_%s_hidden_%s_%s%s%s%s%sntrain_%02d_rot_%02d"
-    
-    return name_format%(args.results_path,
-                        args.label,
-                        experiment_type_str,
-                        label_str,
-                        conv_size_str,
-                        conv_filter_str,
-                        pool_str,
-                        args.padding,
-                        hidden_str, 
-                        dropout_str,
-                        sdropout_str,
-                        regularizer_l1_str,
-                        regularizer_l2_str,
-                        lrate_str,
-                        args.Ntraining,
-                        args.rotation)
-    
+#                         Experiment                            #
 #################################################################
-def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
+
+def execute_exp(args, multi_gpus:int=1):
     '''
     Perform the training and evaluation for a single model
     
@@ -276,7 +99,7 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
 
     ds_train, ds_validation, ds_testing, n_classes = create_datasets(base_dir=args.dataset,
                                                                      fold=args.rotation,
-                                                                     train_filt='*0',
+                                                                     train_filt='*[012345678]',
                                                                      cache_dir=args.cache,
                                                                      repeat_train=args.repeat,
                                                                      shuffle_train=args.shuffle,
@@ -487,7 +310,7 @@ def execute_exp(args:argparse.ArgumentParser=None, multi_gpus:int=1):
     return model
 
 
-def check_completeness(args:argparse.ArgumentParser):
+def check_completeness(args):
     '''
     Check the completeness of a Cartesian product run.
 
@@ -529,6 +352,10 @@ def check_completeness(args:argparse.ArgumentParser):
 
     
 #################################################################
+#                            Main                               #
+#################################################################
+
+
 if __name__ == "__main__":
     # Parse and check incoming arguments
     parser = create_parser()
@@ -543,27 +370,11 @@ if __name__ == "__main__":
         tf.config.set_visible_devices([], 'GPU')
         print('NO VISIBLE DEVICES!!!!')
 
-    # GPU check
-    # visible_devices = tf.config.get_visible_devices('GPU') 
-    # n_visible_devices = len(visible_devices)
-    # print('GPUS:', visible_devices)
-    # if n_visible_devices > 0:
-    #     for device in visible_devices:
-    #         tf.config.experimental.set_memory_growth(device, True)
-    #     print('We have %d GPUs\n'%n_visible_devices)
-    # else:
-    #     print('NO GPU')
-
     if args.check:
         # Just check to see if all experiments have been executed
         check_completeness(args)
     else:
         # Execute the experiment
-
-        # Set number of threads, if it is specified
-        # if args.cpus_per_task is not None:
-        #     tf.config.threading.set_intra_op_parallelism_threads(args.cpus_per_task//2)
-        #     tf.config.threading.set_inter_op_parallelism_threads(args.cpus_per_task//2)
 
         # Do the work
         execute_exp(args, multi_gpus=n_visible_devices)

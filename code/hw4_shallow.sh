@@ -19,4 +19,4 @@
 conda activate dnn
 
 ## SHALLOW
-python hw4.py -v @exp.txt @oscer.txt @net_shallow.txt --exp_index $SLURM_ARRAY_TASK_ID --cpus_per_task $SLURM_CPUS_PER_TASK --epochs 3000 -vvv --save_model --render
+python hw4.py -v @exp.txt @oscer.txt @net_shallow.txt --exp_index $SLURM_ARRAY_TASK_ID --cpus_per_task $SLURM_CPUS_PER_TASK -vvv --save_model --render --cache ""

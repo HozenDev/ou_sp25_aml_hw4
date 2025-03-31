@@ -6,7 +6,76 @@ Argument parser needed by multiple programs.
 Author: Andrew H. Fagg (andrewhfagg@gmail.com)
 '''
 
+from job_control import JobIterator
 import argparse
+
+def exp_type_to_hyperparameters(args) -> dict:
+    '''
+    Translate the exp_type into a hyperparameter set
+
+    This is trivial right now
+
+    :param args: ArgumentParser
+
+    :return: Hyperparameter set (in dictionary form)
+    '''
+    if args.exp_type is None:
+        p = {'rotation': range(5)}
+    elif args.exp_type == 'L2':
+        p = {'rotation': range(5), 'L2_regularization': [1.0, 10.0]}
+    else:
+        assert False, "Unrecognized exp_type (%s)"%args.exp_type
+
+    return p
+
+
+def check_args(args):
+    '''
+    Check that the input arguments are rational
+
+    '''
+    assert (args.rotation >= 0 and args.rotation < args.Nfolds), "Rotation must be between 0 and Nfolds"
+    assert (args.Ntraining >= 1 and args.Ntraining <= (args.Nfolds-2)), "Ntraining must be between 1 and Nfolds-2"
+    assert (args.dropout is None or (args.dropout > 0.0 and args.dropout < 1)), "Dropout must be between 0 and 1"
+    assert (args.spatial_dropout is None or (args.spatial_dropout > 0.0 and args.dropout < 1)), "Spatial dropout must be between 0 and 1"
+    assert (args.lrate > 0.0 and args.lrate < 1), "Lrate must be between 0 and 1"
+    assert (args.L1_regularization is None or (args.L1_regularization > 0.0 and args.L1_regularization < 1)), "L1_regularization must be between 0 and 1"
+    assert (args.L2_regularization is None or (args.L2_regularization > 0.0 and args.L2_regularization < 1)), "L2_regularization must be between 0 and 1"
+    assert (args.cpus_per_task is None or args.cpus_per_task > 1), "cpus_per_task must be positive or None"
+    
+
+def augment_args(args)->str:
+    '''
+    Use the jobiterator to override the specified arguments based on the experiment index.
+
+    Modifies the args
+
+    :param args: arguments from ArgumentParser
+
+    :return: A string representing the selection of parameters to be used in the file name
+    '''
+    
+    # Create parameter sets to execute the experiment on.  This defines the Cartesian product
+    #  of experiments that we will be executing
+    p = exp_type_to_hyperparameters(args)
+
+    # Check index number
+    index = args.exp_index
+    if index is None:
+        return ""
+    
+    # Create the iterator
+    ji = JobIterator(p)
+    print("Total jobs:", ji.get_njobs())
+    
+    # Check bounds
+    assert (args.exp_index >= 0 and args.exp_index < ji.get_njobs()), "exp_index out of range"
+
+    # Print the parameters specific to this exp_index
+    print(ji.get_index(args.exp_index))
+    
+    # Push the attributes to the args object and return a string that describes these structures
+    return ji.set_attributes_by_index(args.exp_index, args)
 
 def create_parser():
     '''
@@ -34,10 +103,10 @@ def create_parser():
     parser.add_argument('--exp_type', type=str, default=None, help="Experiment type")
     
     parser.add_argument('--label', type=str, default=None, help="Extra label to add to output files");
-    parser.add_argument('--dataset', type=str, default='/home/fagg/datasets/core50', help='Data set directory')
+    parser.add_argument('--dataset', type=str, default='/home/fagg/datasets/[folder]', help='Data set directory')
     parser.add_argument('--problem', type=str, default='condition', help='Problem type [condition, example]')
     parser.add_argument('--image_size', nargs=3, type=int, default=[256,256,26], help="Size of input images (rows, cols, channels)")
-    parser.add_argument('--meta_dataset', type=str, default='core50_df.pkl', help='Name of file containing the core 50 metadata')
+    parser.add_argument('--meta_dataset', type=str, default='meta.pkl', help='Name of file containing the core 50 metadata')
     parser.add_argument('--precache', type=str, default=None, help='Precached dataset location')
     parser.add_argument('--model_dir', type=str, default=None, help='Location of saved model (post only)')
     parser.add_argument('--objects_pre_process', nargs='+', type=int, default=[0, 1, 5, 9], help='Objects to extract from the raw dataset')
@@ -79,7 +148,8 @@ def create_parser():
     parser.add_argument('--batch', type=int, default=10, help="Training set batch size")
     parser.add_argument('--prefetch', type=int, default=3, help="Number of batches to prefetch")
     parser.add_argument('--num_parallel_calls', type=int, default=4, help="Number of threads to use during batch construction")
-    parser.add_argument('--cache', type=str, default=None, help="Cache (default: none; RAM: specify empty string; else specify file")
+
+    parser.add_argument('--cache', type=str, default=None, help="Cache (default: None; RAM: \"\"; Fast Disk: $LSCRATCH; else specify file")
     parser.add_argument('--shuffle', type=int, default=0, help="Size of the shuffle buffer (0 = no shuffle")
     
     parser.add_argument('--generator_seed', type=int, default=42, help="Seed used for generator configuration")
