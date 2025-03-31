@@ -4,7 +4,6 @@
 256
 26
 --padding=same
---cache=""
 --Ntraining=3
 --patience=200
 --batch=64
