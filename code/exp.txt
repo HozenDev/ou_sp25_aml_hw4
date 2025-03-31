@@ -6,7 +6,7 @@
 --padding=same
 --Ntraining=3
 --patience=50
---batch=64
+--batch=32
 --shuffle=200
 --min_delta=0.001
 --no_use_py_func
