@@ -7,7 +7,7 @@
 #SBATCH --output=results/deep_%j_stdout.txt
 #SBATCH --error=results/deep_%j_stderr.txt
 #SBATCH --time=02:00:00
-#SBATCH --job-name=hw3_deep
+#SBATCH --job-name=hw4_deep
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/cs504305/hw4/code/
@@ -19,4 +19,4 @@
 conda activate dnn
 
 ## SHALLOW
-python hw4.py @exp.txt @oscer.txt @net_deep.txt --exp_index $SLURM_ARRAY_TASK_ID --cpus_per_task $SLURM_CPUS_PER_TASK --epochs 3000 -vvv --save_model --render
+python hw4.py -vvv @exp.txt @oscer.txt @net_deep.txt --exp_index $SLURM_ARRAY_TASK_ID --cpus_per_task $SLURM_CPUS_PER_TASK --save_model --render --cache ""
