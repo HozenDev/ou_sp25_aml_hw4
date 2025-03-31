@@ -6,12 +6,12 @@
 #SBATCH --mem=30G
 #SBATCH --output=results/shallow_%j_stdout.txt
 #SBATCH --error=results/shallow_%j_stderr.txt
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 #SBATCH --job-name=hw4_shallow
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/cs504305/hw4/code/
-#SBATCH --array=1-4
+#SBATCH --array=0-4
 
 #################################################
 # Do not change this line unless you have your own python/tensorflow/keras set up
