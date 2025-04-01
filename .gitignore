@@ -10,8 +10,6 @@
 !/code/*.txt
 !/code/*.py
 !/code/*.sh
-!/code/models
-/code/models/*/*.pkl
 
 # Report
 !/report
