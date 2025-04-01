@@ -1,14 +1,40 @@
+"""
+Advanced Machine Learning, 2025, HW4
+
+Author: Enzo B. Durel (enzo.durel@gmail.com)
+
+Plotting script to analyse models results and performances.
+"""
+
+from chesapeake_loader4 import create_single_dataset
+import tensorflow as tf
+
+# Gpus initialization
+gpus = tf.config.experimental.list_physical_devices('GPU')
+n_visible_devices = len(gpus)
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        print(f"Enabled memory growth for {len(gpus)} GPU(s).")
+    except RuntimeError as e:
+        print(f"Error setting memory growth: {e}")
+
+# Set threading parallelism
+import os
+cpus_per_task = int(os.environ.get("SLURM_CPUS_PER_TASK", 0))
+if cpus_per_task > 1:
+    tf.config.threading.set_intra_op_parallelism_threads(cpus_per_task // 2)
+    tf.config.threading.set_inter_op_parallelism_threads(cpus_per_task // 2)
+
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pickle
-import tensorflow as tf
-import pandas as pd
 
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from parser import check_args, create_parser
-from chesapeake_loader4 import create_single_dataset
-
+    
 #########################################
 #             Load Results              #
 #########################################
