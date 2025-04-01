@@ -11,7 +11,7 @@
 !/code/*.py
 !/code/*.sh
 !/code/models
-!/code/models/*/*.pkl
+/code/models/*/*.pkl
 
 # Report
 !/report
