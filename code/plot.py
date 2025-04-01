@@ -267,13 +267,13 @@ if __name__ == "__main__":
     
     for i in range(nb_rotation):
         try:
-            shallow_model = load_trained_model(deep_model_dir, f"rot_0{i}")
+            shallow_model = load_trained_model(shallow_model_dir, f"rot_0{i}")
             shallow_models.append(shallow_model)
         except Exception as e:
             print(f"Error loading shallow model: {e}")
         
         try:
-            deep_model = load_trained_model(shallow_model_dir, f"rot_0{i}")
+            deep_model = load_trained_model(deep_model_dir, f"rot_0{i}")
             deep_models.append(deep_model)
         except Exception as e:
             print(f"Error loading deep model: {e}")
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     print(len(shallow_models), len(deep_models))
 
     # Example of prediction from a model
-    prediction_example_from_a_model(args, deep_models[0], 0, num_examples=10, filename="figure_5b.png")
+    prediction_example_from_a_model(args, deep_models[2], 2, num_examples=10, filename="figure_5b.png")
     prediction_example_from_a_model(args, shallow_models[0], 0, num_examples=10, filename="figure_5a.png")
 
     # Confusion matrix
