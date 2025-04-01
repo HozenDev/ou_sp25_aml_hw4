@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --partition=gpu
+#SBATCH -x c860
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=40
 #SBATCH --mem=20G
 #SBATCH --output=results/plot_%j_stdout.txt
