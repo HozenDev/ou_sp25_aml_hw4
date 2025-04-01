@@ -5,8 +5,8 @@
 #SBATCH --mem=10G
 #SBATCH --output=results/plot_%j_stdout.txt
 #SBATCH --error=results/plot_%j_stderr.txt
-#SBATCH --time=00:10:00
-#SBATCH --job-name=hw3_plot
+#SBATCH --time=00:20:00
+#SBATCH --job-name=aml_plot
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/cs504305/hw4/code/
