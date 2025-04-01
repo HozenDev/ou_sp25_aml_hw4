@@ -119,7 +119,8 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
     """
     Computes and plots a combined confusion matrix from multiple model rotations.
     """
-    y_true, y_pred = [], []
+    all_y_true = []
+    all_y_pred = []
 
     for i, model in enumerate(models):
 
@@ -136,17 +137,37 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
                                         prefetch=args.prefetch,
                                         num_parallel_calls=args.num_parallel_calls)
         
-        for images, labels in test_ds:
-            y_true.extend(labels.numpy())  
-            y_pred.extend(np.argmax(model.predict(images), axis=1))
+        for x_batch, y_batch in test_ds:
+            preds = model.predict(x_batch)
+            y_pred = np.argmax(preds, axis=-1)  # shape: (B, 256, 256)
+            y_true = y_batch.numpy()            # shape: (B, 256, 256)
 
-    # Compute the combined confusion matrix
-    cm = confusion_matrix(y_true, y_pred)
+            all_y_pred.append(y_pred.flatten())
+            all_y_true.append(y_true.flatten())
+            
+    y_true_flat = np.concatenate(all_y_true)
+    y_pred_flat = np.concatenate(all_y_pred)
 
-    # Plot confusion matrix
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[class_names[i] for i in range(num_classes)])
-    disp.plot(cmap='Blues', values_format='d')
+    # 4. Compute confusion matrix
+    labels = list(range(7))
+    cm = confusion_matrix(y_true_flat, y_pred_flat, labels=labels)
+
+    # 5. Plot
+    _, ax = plt.subplots(figsize=(8, 6))
+    im = ax.imshow(cm, cmap="Blues")
+
     plt.title(title)
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True Label")
+    plt.colorbar(im, ax=ax)
+    plt.xticks(np.arange(7), class_names, rotation=45)
+    plt.yticks(np.arange(7), class_names)
+
+    for i in range(7):
+        for j in range(7):
+            ax.text(j, i, f"{cm[i, j]:,}", ha="center", va="center", color="black")
+
+    plt.tight_layout()
     plt.savefig(filename)
 
 
@@ -224,10 +245,10 @@ if __name__ == "__main__":
     # plot_test_sample_with_predictions(test_ds, shallow_models[0], deep_models[0], num_samples=5, num_classes=num_classes)
 
     # Figure 4a: Shallow Model Confusion Matrix
-    plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
+    # plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
 
     # Figure 4b: Deep Model Confusion Matrix
-    plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
+    # plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
 
     # Figure 5: Test Accuracy Scatter Plot
     shallow_results = load_results([shallow_model_dir])
