@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #SBATCH --partition=gpu
-#SBATCH --cpus-per-task=20
-#SBATCH --mem=10G
+#SBATCH --cpus-per-task=40
+#SBATCH --mem=20G
 #SBATCH --output=results/plot_%j_stdout.txt
 #SBATCH --error=results/plot_%j_stderr.txt
 #SBATCH --time=00:20:00
