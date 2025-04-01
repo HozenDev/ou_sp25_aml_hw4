@@ -149,7 +149,7 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
     y_pred_flat = np.concatenate(all_y_pred)
 
     # 4. Compute confusion matrix
-    labels = list(range(7))
+    labels = list(range(num_classes))
     cm = confusion_matrix(y_true_flat, y_pred_flat, labels=labels)
 
     # 5. Plot
@@ -160,11 +160,11 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
     plt.xlabel("Predicted Label")
     plt.ylabel("True Label")
     plt.colorbar(im, ax=ax)
-    plt.xticks(np.arange(7), class_names, rotation=45)
-    plt.yticks(np.arange(7), class_names)
+    plt.xticks(np.arange(num_classes), class_names, rotation=45)
+    plt.yticks(np.arange(num_classes), class_names)
 
-    for i in range(7):
-        for j in range(7):
+    for i in range(num_classes):
+        for j in range(num_classes):
             ax.text(j, i, f"{cm[i, j]:,}", ha="center", va="center", color="black")
 
     plt.tight_layout()
@@ -245,10 +245,10 @@ if __name__ == "__main__":
     # plot_test_sample_with_predictions(test_ds, shallow_models[0], deep_models[0], num_samples=5, num_classes=num_classes)
 
     # Figure 4a: Shallow Model Confusion Matrix
-    # plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
+    plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
 
     # Figure 4b: Deep Model Confusion Matrix
-    # plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
+    plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
 
     # Figure 5: Test Accuracy Scatter Plot
     shallow_results = load_results([shallow_model_dir])
