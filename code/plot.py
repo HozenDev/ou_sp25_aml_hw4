@@ -234,7 +234,7 @@ def plot_test_accuracy_scatter(shallow_results, deep_results, filename="test_acc
         plt.text(shallow_accuracies[i], deep_accuracies[i], f"{rotations[i]}", fontsize=10, ha='right', va='bottom')
 
     # Diagonal line    
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)  # y = x line
+    plt.plot([0.8, 1], [0.8, 1], 'k--', lw=2)  # y = x line
 
     plt.xlabel("Shallow Model Accuracy")
     plt.ylabel("Deep Model Accuracy")

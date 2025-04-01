@@ -78,6 +78,7 @@
 #+attr_latex: :height 20cm :float nil
 [[file:./img/slice_arch_deep_2.png]]
 
+#+caption: Deep Model Architecture
 #+attr_latex: :height 20cm :float nil
 [[file:./img/slice_arch_deep_3.png]]
 
@@ -117,7 +118,17 @@
 #+attr_latex: :width 10cm :float nil
 [[file:./img/figure_4.png]]
 
-** Figure 5
+** Figure 5a
+
+#+caption: Example Predictions for Shallow Model
+#+attr_latex: :height 20cm :float nil
+[[file:./img/figure_5a.png]]
+
+** Figure 5b
+
+#+caption: Example Predictions for Deep Model
+#+attr_latex: :height 20cm :float nil
+[[file:./img/figure_5b.png]]
 
 ** newpage :ignore:
 
@@ -126,4 +137,14 @@
 #+end_src
 
 * Analysis & Discussion
+
+** Deep Network Test Sparse Categorical Accuracy
+
+#+caption: Deep Model Sparse Categorical Accuracy accross all Rotations
+#+attr_latex: :align |l|c|c|c|c|c| :float nil
+|-----------------------------+--------+---------+--------+--------+---------|
+|                             |  Rot 0 |   Rot 1 |  Rot 2 |  Rot 3 |   Rot 4 |
+|-----------------------------+--------+---------+--------+--------+---------|
+| Sparse Categorical Accuracy | 0.9191 | 0.91768 | 0.9332 | 0.9318 | 0.92368 |
+|-----------------------------+--------+---------+--------+--------+---------|
 
