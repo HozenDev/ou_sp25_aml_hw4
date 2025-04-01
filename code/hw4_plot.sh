@@ -16,4 +16,4 @@
 . /home/fagg/tf_setup.sh
 conda activate dnn
 
-python plot.py -v @exp.txt @oscer.txt --cache "" --render
+python plot.py -v @exp.txt @oscer.txt

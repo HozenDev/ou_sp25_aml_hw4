@@ -192,7 +192,7 @@ if __name__ == "__main__":
                                           partition='valid',
                                           fold=i,
                                           filt='*',
-                                          cache_path='',
+                                          cache_path=None,
                                           repeat=False,
                                           shuffle=None,
                                           batch_size=args.batch,
