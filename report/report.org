@@ -1,0 +1,129 @@
+* Setup :ignore:
+
+#+SETUPFILE: ~/public/hozen-style/latex/hozen.setup
+
+# Ensure that we respect org mode new line
+#+OPTIONS: \n:t
+
+# To disbale _ and ^ behaviour but keep ^{} and _{}
+#+OPTIONS: ^:{}
+
+#+LATEX_HEADER: \usepackage[linesnumbered]{algorithm2e}
+#+LATEX_HEADER: \usepackage[inkscapelatex=false]{svg}
+
+* Page de garde :ignore:
+** Informations :ignore:
+
+#+AUTHOR: Author: Enzo Durel
+#+AUTHOR: \newline
+#+AUTHOR: 
+#+EMAIL: /
+#+TITLE: 5043 Advanced Machine Learning - HW 4
+#+OPTIONS: toc:nil
+
+** Logo :ignore:
+
+#+ATTR_LATEX: :width 10cm :align left
+[[file:~/orgmode_latex_export_img/ou_logo.png]]
+
+** newpage :noexport:
+
+#+begin_export latex
+\newpage
+#+end_export
+
+** Table des matières :ignore:
+
+#+LATEX: \thispagestyle{empty}
+#+TOC: headlines 3
+#+LATEX: \clearpage
+#+LATEX: \pagenumbering{arabic} 
+
+** Liste des figures :ignore:
+
+#+begin_export latex
+\thispagestyle{empty}
+\listoffigures
+\clearpage
+\pagenumbering{arabic} 
+#+end_export
+
+** Liste des algorithmes :noexport:
+
+#+begin_export latex
+\thispagestyle{empty}
+\listofalgorithms
+\clearpage
+\pagenumbering{arabic} 
+#+end_export
+
+** newpage :ignore:
+
+#+begin_export latex
+\newpage
+#+end_export
+
+* Figures
+** Figure 1a
+
+#+caption: Shallow Model Architecture
+#+attr_latex: :height 20cm :float nil
+[[file:./img/arch_shallow.png]]
+
+** Figure 1b
+
+#+attr_latex: :height 20cm :float nil
+[[file:./img/slice_arch_deep_1.png]]
+
+#+attr_latex: :height 20cm :float nil
+[[file:./img/slice_arch_deep_2.png]]
+
+#+attr_latex: :height 20cm :float nil
+[[file:./img/slice_arch_deep_3.png]]
+
+** newpage :ignore:
+
+#+begin_src latex
+  \newpage
+#+end_src
+
+** Figure 2a
+
+#+caption: Validation Accuracy as a function of epoch for the Shallow model
+#+attr_latex: :width 12cm :float nil
+[[file:./img/shallow_acc.png]]
+
+** Figure 2b
+
+#+caption: Validation Loss as a function of epoch for the Deep models
+#+attr_latex: :width 12cm :float nil
+[[file:./img/deep_acc.png]]
+
+** Figure 3a
+
+#+caption: Confusion Matrix of the test set data across all rotations for the Shallow model
+#+attr_latex: :width 12cm :float nil
+[[file:./img/figure_3a.png]]
+
+** Figure 3b
+
+#+caption: Confusion Matrix of the test set data across all rotations for the Deep model
+#+attr_latex: :width 12cm :float nil
+[[file:./img/figure_3b.png]]
+
+** Figure 4
+
+#+caption: Test set accuracy for the deep vs shallow networks
+#+attr_latex: :width 10cm :float nil
+[[file:./img/figure_4.png]]
+
+** Figure 5
+
+** newpage :ignore:
+
+#+begin_src latex
+\newpage
+#+end_src
+
+* Analysis & Discussion
+

@@ -32,7 +32,7 @@ import numpy as np
 import os
 import pickle
 
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix
 from parser import check_args, create_parser
     
 #########################################
@@ -71,7 +71,7 @@ def load_results(results_dir):
 #             Plot Methods              #
 #########################################
 
-def plot_test_sample_with_predictions(test_ds, shallow_model, deep_model, num_classes, num_samples):
+def plot_test_sample_with_predictions(test_ds, shallow_model, deep_model, num_classes, num_samples, class_names, filename="sample_predictions.png"):
     """
     Plots models output from the testing dataset.
     """
@@ -89,7 +89,6 @@ def plot_test_sample_with_predictions(test_ds, shallow_model, deep_model, num_cl
 
     # Format images and class names
     images = (images * 255).astype(np.uint8) # Convert images to uint8 for plotting
-    class_names = ['Plug Adapter', 'Scissors', 'Light Bulb', 'Cup']
 
     # Fix issue when num_samples = 1
     _, axes = plt.subplots(num_samples, 2, figsize=(12, 4 * num_samples))
@@ -112,8 +111,50 @@ def plot_test_sample_with_predictions(test_ds, shallow_model, deep_model, num_cl
         axes[i, 1].set_title(f"Deep Model\n{deep_title}", fontsize=10)
 
     plt.tight_layout()
-    plt.savefig("figure_3.png")
+    plt.savefig(filename)
 
+def prediction_example_from_a_model(args, model, fold, num_examples=10, filename="predict_example.png"):
+
+    test_ds = create_single_dataset(base_dir=args.dataset,
+                                    full_sat=True,
+                                    patch_size=None,
+                                    partition='valid',
+                                    fold=fold,
+                                    filt='*',
+                                    cache_path='',
+                                    repeat=False,
+                                    shuffle=None,
+                                    batch_size=args.batch,
+                                    prefetch=args.prefetch,
+                                    num_parallel_calls=args.num_parallel_calls)
+
+    for batch in test_ds.take(1):
+        inputs, true_labels = batch
+
+        preds = model.predict(inputs)
+        pred_labels = np.argmax(preds, axis=-1)
+
+        _, axes = plt.subplots(num_examples, 3, figsize=(10, num_examples * 3))
+        for i in range(num_examples):
+            rgb = inputs[i, :, :, :3].numpy()
+            gt = true_labels[i].numpy()
+            pred = pred_labels[i]
+
+            axes[i, 0].imshow(rgb)
+            axes[i, 0].set_title("Input RGB")
+            axes[i, 0].axis('off')
+
+            axes[i, 1].imshow(gt, vmin=0, vmax=6)
+            axes[i, 1].set_title("Ground Truth")
+            axes[i, 1].axis('off')
+
+            axes[i, 2].imshow(pred, vmin=0, vmax=6)
+            axes[i, 2].set_title("Prediction")
+            axes[i, 2].axis('off')
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    
 
 def plot_combined_confusion_matrix(args, models, num_classes, class_names, title="Confusion Matrix", filename="figure_4.png"):
     """
@@ -139,8 +180,8 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
         
         for x_batch, y_batch in test_ds:
             preds = model.predict(x_batch)
-            y_pred = np.argmax(preds, axis=-1)  # shape: (B, 256, 256)
-            y_true = y_batch.numpy()            # shape: (B, 256, 256)
+            y_pred = np.argmax(preds, axis=-1)  
+            y_true = y_batch.numpy()            
 
             all_y_pred.append(y_pred.flatten())
             all_y_true.append(y_true.flatten())
@@ -148,11 +189,9 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
     y_true_flat = np.concatenate(all_y_true)
     y_pred_flat = np.concatenate(all_y_pred)
 
-    # 4. Compute confusion matrix
     labels = list(range(num_classes))
     cm = confusion_matrix(y_true_flat, y_pred_flat, labels=labels)
 
-    # 5. Plot
     _, ax = plt.subplots(figsize=(8, 6))
     im = ax.imshow(cm, cmap="Blues")
 
@@ -171,7 +210,7 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
     plt.savefig(filename)
 
 
-def plot_test_accuracy_scatter(shallow_results, deep_results):
+def plot_test_accuracy_scatter(shallow_results, deep_results, filename="test_acc.png"):
     """
     Plots a scatter plot comparing test accuracies of shallow vs. deep models
     """
@@ -202,7 +241,7 @@ def plot_test_accuracy_scatter(shallow_results, deep_results):
     plt.title("Test Accuracy: Deep vs. Shallow")
     plt.legend()
     plt.grid(True)
-    plt.savefig("figure_5.png")
+    plt.savefig(filename)
 
 
 #########################################
@@ -240,18 +279,17 @@ if __name__ == "__main__":
             print(f"Error loading deep model: {e}")
 
     print(len(shallow_models), len(deep_models))
-            
-    # Figure 3: Test Sample with Predictions
-    # plot_test_sample_with_predictions(test_ds, shallow_models[0], deep_models[0], num_samples=5, num_classes=num_classes)
 
-    # Figure 4a: Shallow Model Confusion Matrix
-    plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
+    # Example of prediction from a model
+    prediction_example_from_a_model(args, deep_models[0], 0, num_examples=10, filename="figure_5b.png")
+    prediction_example_from_a_model(args, shallow_models[0], 0, num_examples=10, filename="figure_5a.png")
 
-    # Figure 4b: Deep Model Confusion Matrix
-    plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
+    # Confusion matrix
+    plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_3a.png", num_classes=num_classes)
+    plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_3b.png", num_classes=num_classes)
 
-    # Figure 5: Test Accuracy Scatter Plot
+    # Test accuracy scatter plot
     shallow_results = load_results([shallow_model_dir])
     deep_results = load_results([deep_model_dir])
-    plot_test_accuracy_scatter(shallow_results, deep_results)
+    plot_test_accuracy_scatter(shallow_results, deep_results, filename="figure_4.png")
 
