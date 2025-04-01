@@ -8,7 +8,7 @@
 --patience=100
 --batch=64
 --shuffle=200
---min_delta=0.001
+--min_delta=0.01
 --no_use_py_func
 --project=HW4
 --epochs=500
