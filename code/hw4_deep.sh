@@ -7,7 +7,7 @@
 #SBATCH --mem=30G
 #SBATCH --output=results/deep_%j_stdout.txt
 #SBATCH --error=results/deep_%j_stderr.txt
-#SBATCH --time=05:00:00
+#SBATCH --time=02:00:00
 #SBATCH --job-name=hw4_deep
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
 #SBATCH --mail-type=ALL
