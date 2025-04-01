@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH --partition=gpu_a100
+#SBATCH --partition=gpu_a100[908,822,735]
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=64
 #SBATCH --mem=30G
 #SBATCH --output=results/shallow_%j_stdout.txt
 #SBATCH --error=results/shallow_%j_stderr.txt
