@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 #SBATCH --partition=gpu_a100
+#SBATCH --nodelist=c908
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=30G

@@ -12,7 +12,7 @@
 #SBATCH --mail-user=Enzo.B.Durel-1@ou.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/cs504305/hw4/code/
-#SBATCH --array=0
+#SBATCH --array=0-4
 
 #################################################
 # Do not change this line unless you have your own python/tensorflow/keras set up
@@ -20,4 +20,4 @@
 conda activate dnn
 
 ## SHALLOW
-python hw4.py -vvv @exp.txt @oscer.txt @net_shallow.txt --exp_index $SLURM_ARRAY_TASK_ID --cpus_per_task $SLURM_CPUS_PER_TASK --cache ""
+python hw4.py -vvv @exp.txt @oscer.txt @net_shallow.txt --exp_index $SLURM_ARRAY_TASK_ID --cpus_per_task $SLURM_CPUS_PER_TASK --save_model --render --cache ""
