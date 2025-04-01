@@ -129,7 +129,7 @@ def plot_combined_confusion_matrix(args, models, num_classes, class_names, title
                                         partition='valid',
                                         fold=i,
                                         filt='*',
-                                        cache_path=None,
+                                        cache_path='',
                                         repeat=False,
                                         shuffle=None,
                                         batch_size=args.batch,
@@ -218,6 +218,8 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error loading deep model: {e}")
 
+    print(len(shallow_models), len(deep_models))
+            
     # Figure 3: Test Sample with Predictions
     # plot_test_sample_with_predictions(test_ds, shallow_models[0], deep_models[0], num_samples=5, num_classes=num_classes)
 
