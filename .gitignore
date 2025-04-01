@@ -11,9 +11,11 @@
 !/code/*.py
 !/code/*.sh
 !/code/models
+!/code/models/*/*.pkl
 
 # Report
 !/report
 /report/*
 !/report/*.pdf
 !/report/*.org
+
