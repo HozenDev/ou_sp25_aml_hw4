@@ -115,14 +115,28 @@ def plot_test_sample_with_predictions(test_ds, shallow_model, deep_model, num_cl
     plt.savefig("figure_3.png")
 
 
-def plot_combined_confusion_matrix(models, test_ds, num_classes, class_names, title="Confusion Matrix", filename="figure_4.png"):
+def plot_combined_confusion_matrix(args, models, num_classes, class_names, title="Confusion Matrix", filename="figure_4.png"):
     """
     Computes and plots a combined confusion matrix from multiple model rotations.
     """
     y_true, y_pred = [], []
 
     for i, model in enumerate(models):
-        for images, labels in test_ds[i]:
+
+        test_ds = create_single_dataset(base_dir=args.dataset,
+                                        full_sat=True,
+                                        patch_size=None,
+                                        partition='valid',
+                                        fold=i,
+                                        filt='*',
+                                        cache_path=None,
+                                        repeat=False,
+                                        shuffle=None,
+                                        batch_size=args.batch,
+                                        prefetch=args.prefetch,
+                                        num_parallel_calls=args.num_parallel_calls)
+        
+        for images, labels in test_ds:
             y_true.extend(labels.numpy())  
             y_pred.extend(np.argmax(model.predict(images), axis=1))
 
@@ -181,24 +195,8 @@ if __name__ == "__main__":
     check_args(args)
 
     # Load testing dataset and number of classes
-    test_ds = []
     num_classes = 7
     class_names = ["No Class", "Water", "Forest", "Low Veg", "Barren", "Impervious", "Road"]
-
-    for i in range(5):
-        test_i_ds = create_single_dataset(base_dir=args.dataset,
-                                          full_sat=True,
-                                          patch_size=None,
-                                          partition='valid',
-                                          fold=i,
-                                          filt='*',
-                                          cache_path=None,
-                                          repeat=False,
-                                          shuffle=None,
-                                          batch_size=args.batch,
-                                          prefetch=args.prefetch,
-                                          num_parallel_calls=args.num_parallel_calls)
-        test_ds.append(test_i_ds)
 
     # Load trained models
     deep_model_dir = "./models/deep_1/"
@@ -224,10 +222,10 @@ if __name__ == "__main__":
     # plot_test_sample_with_predictions(test_ds, shallow_models[0], deep_models[0], num_samples=5, num_classes=num_classes)
 
     # Figure 4a: Shallow Model Confusion Matrix
-    plot_combined_confusion_matrix(shallow_models, test_ds, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
+    plot_combined_confusion_matrix(args=args, models=shallow_models, class_names=class_names, title="Shallow Model Confusion Matrix", filename="figure_4a.png", num_classes=num_classes)
 
     # Figure 4b: Deep Model Confusion Matrix
-    plot_combined_confusion_matrix(deep_models, test_ds, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
+    plot_combined_confusion_matrix(args=args, models=deep_models, class_names=class_names, title="Deep Model Confusion Matrix", filename="figure_4b.png", num_classes=num_classes)
 
     # Figure 5: Test Accuracy Scatter Plot
     shallow_results = load_results([shallow_model_dir])
